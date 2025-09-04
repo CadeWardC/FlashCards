@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏷️</text></svg>">
+    <title>FlashLabel - Interactive Image Labeling</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        /* Screen Layout */
+        .screen {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Upload Screen */
+        .upload-screen {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .upload-screen h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .upload-screen p {
+            font-size: 1.1em;
+            color: #718096;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .upload-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .upload-option {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .upload-option:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .upload-option.active {
+            border-color: #667eea;
+            background: #edf2f7;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-option h3 {
+            font-size: 1.3em;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .upload-option .icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #ebf4ff;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-content {
+            pointer-events: none;
+        }
+
+        .drop-zone-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .drop-zone-text {
+            font-size: 1.2em;
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-subtext {
+            color: #718096;
+            font-size: 0.95em;
+        }
+
+        /* URL Input */
+        .url-input-section {
+            margin: 20px 0;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Label Screen */
+        .label-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .label-title {
+            font-size: 1.8em;
+            color: #2d3748;
+        }
+
+        .label-stats {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .label-workspace {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            height: calc(100vh - 300px);
+            min-height: 500px;
+        }
+
+        .image-container {
+            position: relative;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .labeled-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-select: none;
+            display: block;
+        }
+
+        .label-pin {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .label-pin:hover {
+            background: #5a67d8;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .label-pin.selected {
+            background: #e53e3e;
+            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.3);
+        }
+
+        .label-pin.answering {
+            background: #dd6b20; /* Orange color */
+            box-shadow: 0 0 0 4px rgba(221, 107, 32, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+
+        .label-pin.found {
+            background: #38a169;
+            border-color: #f0fff4;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .study-revealed-label {
+            position: absolute;
+            background: rgba(45, 55, 72, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 20;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .label-tooltip {
+            position: absolute;
+            background: rgba(45, 55, 72, 0.95);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 30;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .label-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(45, 55, 72, 0.95);
+        }
+
+        /* Labels Panel */
+        .labels-panel {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .labels-panel h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .current-label-input {
+            margin-bottom: 20px;
+        }
+
+        .current-label-input label {
+            display: block;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .label-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .label-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .label-input.incorrect {
+            animation: incorrect-flash 0.4s;
+        }
+
+        .labels-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .label-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .label-item:hover {
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .label-item.selected {
+            border-color: #e53e3e;
+            background: #fed7d7;
+        }
+
+        .label-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .label-number {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .label-text {
+            flex: 1;
+            margin-left: 12px;
+            color: #2d3748;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .label-text:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .label-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .label-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            min-width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .label-btn:hover {
+            background: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .edit-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .label-coordinates {
+            font-size: 0.8em;
+            color: #718096;
+            font-family: 'Courier New', monospace;
+            margin-top: 4px;
+        }
+
+        .label-created {
+            font-size: 0.75em;
+            color: #a0aec0;
+            margin-top: 2px;
+            font-style: italic;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+
+        .instructions h4 {
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+        }
+
+        /* Save Panel */
+        .save-panel {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .save-panel h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .save-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .save-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Buttons */
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: #38a169;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* Library Screen */
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .library-item {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .library-item:hover {
+            border-color: #cbd5e0;
+            transform: translateY(-2px);
+        }
+
+        .library-preview {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+            background: #edf2f7;
+        }
+
+        .library-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .library-info {
+            padding: 15px;
+        }
+
+        .library-title {
+            font-size: 1.1em;
+            color: #2d3748;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .library-stats {
+            color: #718096;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .library-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .label-workspace {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .labels-panel {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .upload-options {
+                grid-template-columns: 1fr;
+            }
+
+            .label-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .label-workspace {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+        }
+
+        /* Attribution */
+        .attribution {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.8em;
+            color: white;
+            opacity: 0.7;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrect-flash {
+            0%, 100% { border-color: #e53e3e; }
+            50% { border-color: #667eea; }
+        }
+
+        @keyframes successPulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.3); background: #38a169; }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏷️ FlashLabel</h1>
+            <p>Interactive image labeling for visual learning • Part of the FlashCard Suite</p>
+        </div>
+
+        <!-- Upload Screen -->
+        <div id="uploadScreen" class="screen">
+            <div class="upload-screen">
+                <h2>Label Your Images</h2>
+                <p>Upload an image and add interactive labels to create visual study materials. Perfect for anatomy, geography, diagrams, and more!</p>
+                
+                <div class="upload-options">
+                    <div class="upload-option" onclick="triggerFileUpload()">
+                        <span class="icon">📁</span>
+                        <h3>Upload File</h3>
+                        <p>Choose an image from your device</p>
+                    </div>
+                    
+                    <div class="upload-option" onclick="showUrlInput()">
+                        <span class="icon">🔗</span>
+                        <h3>From URL</h3>
+                        <p>Load an image from the web</p>
+                    </div>
+                </div>
+
+                <div class="drop-zone" onclick="triggerFileUpload()">
+                    <div class="drop-zone-content">
+                        <div class="drop-zone-icon">📂</div>
+                        <div class="drop-zone-text">Drag & drop your image here</div>
+                        <div class="drop-zone-subtext">Supports: JPG, PNG, GIF, WebP</div>
+                    </div>
+                </div>
+
+                <div id="urlInputSection" class="url-input-section hidden">
+                    <input type="url" class="url-input" id="imageUrl" placeholder="Paste image URL here (https://...)" onkeypress="handleUrlKeyPress(event)">
+                    <div class="button-container">
+                        <button class="btn" onclick="loadImageFromUrl()">Load Image</button>
+                        <button class="btn btn-secondary" onclick="hideUrlInput()">Cancel</button>
+                    </div>
+                </div>
+
+                <div class="button-container">
+                    <button class="btn btn-secondary" onclick="showLibraryScreen()">📚 View Library</button>
+                </div>
+
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+            </div>
+        </div>
+
+        <!-- Label Screen -->
+        <div id="labelScreen" class="screen hidden">
+            <div class="label-header">
+                <h2 class="label-title">Label Your Image</h2>
+                <div class="label-stats" id="labelStats">0 labels</div>
+            </div>
+
+            <div class="label-workspace">
+                <div class="image-container" id="imageContainer">
+                    <img id="labelImage" class="labeled-image" alt="Image to label">
+                </div>
+
+                <div class="labels-panel">
+                    <h3>🏷️ Labels</h3>
+                    
+                    <div class="instructions">
+                        <h4>How to use:</h4>
+                        <ul>
+                            <li>Click on the image to add a label.</li>
+                            <li>A box will pop up to enter the label text.</li>
+                            <li>Click on labels in the list to edit or delete.</li>
+                            <li>Save your labeled image when you're done.</li>
+                        </ul>
+                    </div>
+
+                    <div class="labels-list" id="labelsList">
+                        <!-- Labels will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="save-panel">
+                <h3>Save Labeled Image</h3>
+                <input type="text" class="save-input" id="saveTitle" placeholder="Enter a title for this labeled image">
+                <input type="text" class="save-input" id="saveDescription" placeholder="Add a description (optional)">
+                
+                <div class="button-container">
+                    <button class="btn btn-secondary" onclick="showUploadScreen()">← New Image</button>
+                    <button class="btn btn-secondary" onclick="clearAllLabels()" id="clearLabelsBtn">Clear Labels</button>
+                    <button class="btn btn-success" onclick="saveLabeledImage()">💾 Save Image</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Library Screen -->
+        <div id="libraryScreen" class="screen hidden">
+            <div class="label-header">
+                <h2 class="label-title">Your Labeled Images</h2>
+                <div class="label-stats" id="libraryStats">0 images</div>
+            </div>
+
+            <div class="library-grid" id="libraryGrid">
+                <!-- Library items will be populated here -->
+            </div>
+
+            <div class="button-container">
+                <button class="btn" onclick="showUploadScreen()">+ New Image</button>
+                <button class="btn btn-secondary" onclick="openFlashcardApp()">🃏 FlashCards</button>
+                <button class="btn btn-secondary" onclick="triggerImport()">📥 Import</button>
+                <button class="btn btn-secondary" onclick="exportAllImages()">💾 Export All</button>
+                <button class="btn btn-danger" onclick="clearLibrary()">🗑️ Clear Library</button>
+            </div>
+        </div>
+
+        <!-- Study Screen -->
+        <div id="studyScreen" class="screen hidden">
+            <div class="label-header">
+                <h2 class="label-title" id="studyTitle">Study Mode</h2>
+                <div class="label-stats" id="studyProgress">0 / 0</div>
+            </div>
+
+            <div class="label-workspace">
+                <div class="image-container" id="studyImageContainer">
+                    <img id="studyImage" class="labeled-image" alt="Image to study">
+                    <!-- Study pins and revealed labels will go here -->
+                </div>
+
+                <div class="labels-panel">
+                    <h3>🧠 Study Session</h3>
+                    <div class="instructions">
+                        <p>Type the name of a label and it will automatically be revealed on the image. Good luck!</p>
+                    </div>
+                    
+                    <div class="current-label-input">
+                        <label for="studyInput">Enter a label:</label>
+                        <input type="text" id="studyInput" class="label-input" placeholder="Type answer here..." autocomplete="off">
+                    </div>
+
+                    <div id="studyResults" class="hidden" style="text-align: center; margin-top: 20px;">
+                        <h4 id="studyCompleteMessage"></h4>
+                    </div>
+
+                    <div class="button-container">
+                        <button id="giveUpBtn" class="btn btn-danger" onclick="giveUpStudySession()">I Give Up</button>
+                        <button id="finishStudyBtn" class="btn btn-secondary hidden" onclick="showLibraryScreen()">Back to Library</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="attribution">Made by Cade Ward</div>
+    <input type="file" id="importInput" accept=".json,application/json" style="display: none;" onchange="handleImport(event)">
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let currentImage = null;
+        let currentLabels = [];
+        let savedImages = [];
+        let selectedLabelIndex = -1;
+        let currentStudySession = null;
+
+        // ===== INITIALIZATION =====
+        function initializeApp() {
+            loadSavedImages();
+            setupEventListeners();
+            showLibraryScreen();
+        }
+
+        function setupEventListeners() {
+            const dropZone = document.querySelector('.drop-zone');
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+
+            // Use event delegation for dynamic elements
+            document.getElementById('imageContainer').addEventListener('click', handleImageClick);
+            document.getElementById('labelsList').addEventListener('click', handleLabelListClick);
+            document.getElementById('studyImageContainer').addEventListener('click', handleStudyPinClick);
+            document.getElementById('studyInput').addEventListener('input', handleStudyInput);
+
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+            window.addEventListener('resize', updateLabelsPosition);
+        }
+
+        function handleKeyboardShortcuts(e) {
+            if (document.getElementById('labelScreen').classList.contains('hidden')) return;
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                deselectLabel();
+            } else if (e.key === 'Delete' && selectedLabelIndex !== -1) {
+                e.preventDefault();
+                deleteLabelByIndex(selectedLabelIndex);
+            } else if (e.key === 'Enter' && selectedLabelIndex !== -1) {
+                e.preventDefault();
+                editLabelByIndex(selectedLabelIndex);
+            }
+        }
+
+        // ===== SCREEN NAVIGATION =====
+        function showUploadScreen() {
+            hideAllScreens();
+            document.getElementById('uploadScreen').classList.remove('hidden');
+        }
+
+        function showLabelScreen() {
+            hideAllScreens();
+            document.getElementById('labelScreen').classList.remove('hidden');
+            updateLabelStats();
+        }
+
+        function showLibraryScreen() {
+            hideAllScreens();
+            document.getElementById('libraryScreen').classList.remove('hidden');
+            updateLibrary();
+        }
+
+        function showStudyScreen() {
+            hideAllScreens();
+            document.getElementById('studyScreen').classList.remove('hidden');
+        }
+
+        function hideAllScreens() {
+            ['uploadScreen', 'labelScreen', 'libraryScreen', 'studyScreen'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        }
+
+        // ===== FILE UPLOAD & URL INPUT =====
+        function triggerFileUpload() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                loadImageFromFile(file);
+            } else {
+                alert('Please select a valid image file (JPG, PNG, GIF, WebP)');
+            }
+            event.target.value = '';
+        }
+
+        function loadImageFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => setupImageForLabeling(e.target.result);
+            reader.readAsDataURL(file);
+        }
+
+        function showUrlInput() {
+            document.getElementById('urlInputSection').classList.remove('hidden');
+            document.getElementById('imageUrl').focus();
+        }
+
+        function hideUrlInput() {
+            document.getElementById('urlInputSection').classList.add('hidden');
+            document.getElementById('imageUrl').value = '';
+        }
+
+        function handleUrlKeyPress(event) {
+            if (event.key === 'Enter') loadImageFromUrl();
+        }
+
+        function loadImageFromUrl() {
+            const url = document.getElementById('imageUrl').value.trim();
+            if (!url) return alert('Please enter a valid image URL');
+
+            const img = new Image();
+            img.onload = () => {
+                setupImageForLabeling(url);
+                hideUrlInput();
+            };
+            img.onerror = () => alert('Unable to load image from this URL. Please check the URL and try again.');
+            img.src = url;
+        }
+
+        // ===== DRAG AND DROP =====
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                loadImageFromFile(files[0]);
+            } else {
+                alert('Please drop a valid image file');
+            }
+        }
+
+        // ===== IMAGE SETUP =====
+        function setupImageForLabeling(imageSrc) {
+            currentImage = { src: imageSrc, title: '', description: '' };
+            currentLabels = [];
+            selectedLabelIndex = -1;
+
+            const img = document.getElementById('labelImage');
+            img.src = imageSrc;
+            img.onload = () => {
+                showLabelScreen();
+                updateLabelsDisplay();
+            };
+        }
+
+        // ===== LABEL MANAGEMENT =====
+        function handleImageClick(e) {
+            // If a pin is clicked, select it
+            if (e.target.matches('.label-pin')) {
+                const index = parseInt(e.target.dataset.index, 10);
+                selectLabel(index);
+                return;
+            }
+
+            // If the image itself is not clicked, do nothing
+            if (!e.target.matches('#labelImage')) return;
+
+            // Prompt for label text immediately
+            const labelText = prompt('Enter label text:');
+            if (!labelText || !labelText.trim()) {
+                return; // Do nothing if user cancels or enters empty text
+            }
+
+            // Calculate position
+            const img = e.target;
+            const rect = img.getBoundingClientRect();
+            const x = Math.max(2, Math.min(98, ((e.clientX - rect.left) / rect.width) * 100));
+            const y = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
+
+            // Add the label
+            addLabel(x, y, labelText.trim());
+        }
+
+        function addLabel(x, y, text) {
+            const label = {
+                id: Date.now() + Math.random(),
+                x, y, text,
+                created: new Date().toISOString()
+            };
+            currentLabels.push(label);
+            updateLabelsDisplay();
+            
+            // Animate the new pin for visual feedback
+            setTimeout(() => {
+                const newPin = document.querySelector(`[data-label-id="${label.id}"]`);
+                if (newPin) newPin.style.animation = 'successPulse 0.6s ease';
+            }, 100);
+        }
+
+        function updateLabelsDisplay() {
+            const container = document.getElementById('imageContainer');
+            const labelsList = document.getElementById('labelsList');
+
+            // Clear all dynamic elements
+            container.querySelectorAll('.label-pin:not(.temp-pin), .label-tooltip').forEach(el => el.remove());
+            labelsList.innerHTML = '';
+
+            currentLabels.forEach((label, index) => {
+                // Create pin, tooltip, and list item
+                container.appendChild(createLabelPin(label, index));
+                container.appendChild(createLabelTooltip(label));
+                labelsList.appendChild(createLabelListItem(label, index));
+            });
+            updateLabelStats();
+        }
+
+        function createLabelPin(label, index) {
+            const pin = document.createElement('div');
+            pin.className = 'label-pin';
+            if (selectedLabelIndex === index) pin.classList.add('selected');
+            pin.style.left = label.x + '%';
+            pin.style.top = label.y + '%';
+            pin.dataset.labelId = label.id;
+            pin.dataset.index = index;
+            pin.title = label.text;
+            pin.textContent = (index + 1);
+            pin.style.cssText += `color:white; font-size:0.7em; font-weight:bold; display:flex; align-items:center; justify-content:center;`;
+            
+            pin.addEventListener('mouseenter', () => showTooltip(label.id));
+            pin.addEventListener('mouseleave', () => hideTooltip(label.id));
+            return pin;
+        }
+
+        function createLabelTooltip(label) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'label-tooltip';
+            tooltip.id = `tooltip-${label.id}`;
+            tooltip.textContent = label.text;
+            tooltip.style.left = label.x + '%';
+            tooltip.style.top = Math.max(0, label.y - 8) + '%';
+            tooltip.style.display = 'none';
+            return tooltip;
+        }
+
+        function createLabelListItem(label, index) {
+            const item = document.createElement('div');
+            item.className = 'label-item';
+            if (selectedLabelIndex === index) item.classList.add('selected');
+            item.dataset.index = index;
+            item.innerHTML = `
+                <div class="label-item-header">
+                    <div class="label-number">${index + 1}</div>
+                    <div class="label-text" title="Click to edit">${escapeHtml(label.text)}</div>
+                    <div class="label-actions">
+                        <button class="label-btn edit-btn" title="Edit label">✏️</button>
+                        <button class="label-btn delete-btn" title="Delete label">🗑️</button>
+                    </div>
+                </div>
+                <div class="label-coordinates">Position: ${label.x.toFixed(1)}%, ${label.y.toFixed(1)}%</div>
+            `;
+            return item;
+        }
+
+        function handleLabelListClick(e) {
+            const item = e.target.closest('.label-item');
+            if (!item) return;
+
+            const index = parseInt(item.dataset.index, 10);
+            if (isNaN(index)) return;
+
+            if (e.target.matches('.edit-btn, .label-text')) {
+                editLabelByIndex(index);
+            } else if (e.target.matches('.delete-btn')) {
+                deleteLabelByIndex(index);
+            } else {
+                selectLabel(index);
+            }
+        }
+
+        function selectLabel(index) {
+            selectedLabelIndex = (selectedLabelIndex === index) ? -1 : index;
+            updateLabelsDisplay();
+            if (selectedLabelIndex !== -1) {
+                const labelItem = document.querySelector(`.label-item[data-index="${index}"]`);
+                if (labelItem) labelItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function deselectLabel() {
+            if (selectedLabelIndex === -1) return;
+            selectedLabelIndex = -1;
+            updateLabelsDisplay();
+        }
+
+        function editLabelByIndex(index) {
+            if (index < 0 || index >= currentLabels.length) return;
+            const label = currentLabels[index];
+            const newText = prompt('Edit label text:', label.text);
+            if (newText && newText.trim() !== '') {
+                currentLabels[index].text = newText.trim();
+                updateLabelsDisplay();
+            } else if (newText !== null) {
+                alert('Label text cannot be empty.');
+            }
+        }
+
+        function deleteLabelByIndex(index) {
+            if (index < 0 || index >= currentLabels.length) return;
+            const label = currentLabels[index];
+            if (confirm(`Delete label "${label.text}"?\n\nThis cannot be undone.`)) {
+                currentLabels.splice(index, 1);
+                if (selectedLabelIndex === index) {
+                    selectedLabelIndex = -1;
+                } else if (selectedLabelIndex > index) {
+                    selectedLabelIndex--;
+                }
+                updateLabelsDisplay();
+            }
+        }
+
+        function clearAllLabels() {
+            if (currentLabels.length === 0) return alert('No labels to clear.');
+            if (confirm(`Clear all ${currentLabels.length} labels?\n\nThis cannot be undone.`)) {
+                currentLabels = [];
+                selectedLabelIndex = -1;
+                updateLabelsDisplay();
+                alert('All labels have been cleared.');
+            }
+        }
+
+        function showTooltip(labelId) {
+            const tooltip = document.getElementById(`tooltip-${labelId}`);
+            if (tooltip) tooltip.style.display = 'block';
+        }
+
+        function hideTooltip(labelId) {
+            const tooltip = document.getElementById(`tooltip-${labelId}`);
+            if (tooltip) tooltip.style.display = 'none';
+        }
+
+        function updateLabelStats() {
+            const count = currentLabels.length;
+            document.getElementById('labelStats').textContent = count === 1 ? '1 label' : `${count} labels`;
+        }
+
+        function updateLabelsPosition() {
+            if (currentLabels.length > 0) setTimeout(updateLabelsDisplay, 100);
+        }
+
+        // ===== SAVE & LIBRARY MANAGEMENT =====
+        function saveLabeledImage() {
+            const title = document.getElementById('saveTitle').value.trim();
+            if (!title) return alert('Please enter a title for your labeled image');
+            if (currentLabels.length === 0 && !confirm('You have no labels. Save anyway?')) return;
+
+            const labeledImage = {
+                id: Date.now() + Math.random(),
+                title,
+                description: document.getElementById('saveDescription').value.trim(),
+                imageSrc: currentImage.src,
+                labels: [...currentLabels],
+                created: new Date().toISOString(),
+                labelCount: currentLabels.length
+            };
+            savedImages.push(labeledImage);
+            saveSavedImages();
+            alert(`"${title}" saved successfully!`);
+            
+            // Clear input fields for next time
+            document.getElementById('saveTitle').value = '';
+            document.getElementById('saveDescription').value = '';
+
+            // Go to the library screen to see the newly saved image
+            showLibraryScreen();
+        }
+
+        function loadSavedImages() {
+            try {
+                savedImages = JSON.parse(localStorage.getItem('flashLabelImages')) || [];
+            } catch (e) {
+                savedImages = [];
+            }
+        }
+
+        function saveSavedImages() {
+            localStorage.setItem('flashLabelImages', JSON.stringify(savedImages));
+        }
+
+        function updateLibrary() {
+            const grid = document.getElementById('libraryGrid');
+            const stats = document.getElementById('libraryStats');
+            stats.textContent = savedImages.length === 1 ? '1 image' : `${savedImages.length} images`;
+            if (savedImages.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #718096;"><h3>No labeled images yet</h3></div>`;
+                return;
+            }
+            grid.innerHTML = '';
+            savedImages.forEach((image, index) => grid.appendChild(createLibraryItem(image, index)));
+        }
+
+        function createLibraryItem(image, index) {
+            const item = document.createElement('div');
+            item.className = 'library-item fade-in';
+            item.innerHTML = `
+                <div class="library-preview"><img class="library-image" src="${escapeHtml(image.imageSrc)}" alt="${escapeHtml(image.title)}"></div>
+                <div class="library-info">
+                    <div class="library-title">${escapeHtml(image.title)}</div>
+                    <div class="library-stats">${image.labelCount} labels • ${new Date(image.created).toLocaleDateString()}</div>
+                    <div class="library-actions">
+                        <button class="btn btn-success" onclick="startStudySession(${index})">🧠 Study</button>
+                        <button class="btn" onclick="editLabeledImage(${index})">📝 Edit</button>
+                        <button class="btn btn-danger" onclick="deleteLabeledImage(${index})">🗑️</button>
+                    </div>
+                </div>`;
+            return item;
+        }
+
+        function editLabeledImage(index) {
+            const image = savedImages[index];
+            currentImage = { src: image.imageSrc, title: image.title, description: image.description };
+            currentLabels = [...image.labels];
+            selectedLabelIndex = -1;
+            const img = document.getElementById('labelImage');
+            img.src = image.imageSrc;
+            img.onload = () => {
+                document.getElementById('saveTitle').value = image.title;
+                document.getElementById('saveDescription').value = image.description || '';
+                showLabelScreen();
+                updateLabelsDisplay();
+                savedImages.splice(index, 1);
+                saveSavedImages();
+            };
+        }
+
+        function exportLabeledImage(index) {
+            const image = savedImages[index];
+            const dataStr = JSON.stringify(image, null, 2);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'}));
+            link.download = `${image.title.replace(/[^a-z0-9]/gi, '_')}.json`;
+            link.click();
+        }
+
+        function deleteLabeledImage(index) {
+            const image = savedImages[index];
+            if (confirm(`Delete "${image.title}"?`)) {
+                savedImages.splice(index, 1);
+                saveSavedImages();
+                updateLibrary();
+            }
+        }
+
+        function exportAllImages() {
+            if (savedImages.length === 0) return alert('No images to export');
+            const exportData = { appName: 'FlashLabel', version: '1.0', images: savedImages };
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(new Blob([dataStr], {type: 'application/json'}));
+            link.download = `flashlabel_export_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function triggerImport() {
+            if (confirm('Importing will merge data from a JSON file into your library. Existing images with the same ID will be skipped. Continue?')) {
+                document.getElementById('importInput').click();
+            }
+        }
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let imagesToImport = [];
+
+                    // Check for multi-image export format
+                    if (data.appName === 'FlashLabel' && Array.isArray(data.images)) {
+                        imagesToImport = data.images;
+                    } 
+                    // Check for single-image export format
+                    else if (data.id && data.title && Array.isArray(data.labels)) {
+                        imagesToImport = [data];
+                    } 
+                    else {
+                        throw new Error('Invalid or unrecognized JSON file format.');
+                    }
+
+                    if (imagesToImport.length === 0) {
+                        return alert('The selected file contains no images to import.');
+                    }
+
+                    const existingIds = new Set(savedImages.map(img => img.id));
+                    let newImagesAdded = 0;
+                    let skippedCount = 0;
+
+                    imagesToImport.forEach(image => {
+                        // Basic validation for each image object
+                        if (image.id && image.title && image.imageSrc && Array.isArray(image.labels)) {
+                            if (!existingIds.has(image.id)) {
+                                savedImages.push(image);
+                                newImagesAdded++;
+                            } else {
+                                skippedCount++;
+                            }
+                        }
+                    });
+
+                    if (newImagesAdded > 0) {
+                        saveSavedImages();
+                        updateLibrary();
+                        alert(`Import successful!\n\n- ${newImagesAdded} new images added.\n- ${skippedCount} duplicate images skipped.`);
+                    } else {
+                        alert(`Import complete. No new images were added. ${skippedCount} duplicate images were found and skipped.`);
+                    }
+
+                } catch (error) {
+                    alert(`Import failed: ${error.message}`);
+                } finally {
+                    // Reset file input to allow re-importing the same file
+                    event.target.value = '';
+                }
+            };
+            reader.onerror = () => alert('Failed to read the file.');
+            reader.readAsText(file);
+        }
+
+        function clearLibrary() {
+            if (savedImages.length > 0 && confirm(`Delete all ${savedImages.length} images?`)) {
+                savedImages = [];
+                saveSavedImages();
+                updateLibrary();
+            }
+        }
+
+        // ===== STUDY SESSION MANAGEMENT =====
+        function startStudySession(index) {
+            const imageToStudy = savedImages[index];
+            if (!imageToStudy || imageToStudy.labels.length === 0) {
+                return alert('This image has no labels to study.');
+            }
+
+            const studyLabels = JSON.parse(JSON.stringify(imageToStudy.labels));
+            studyLabels.forEach(label => {
+                label.found = false;
+                label.revealed = false;
+            });
+
+            currentStudySession = {
+                image: imageToStudy,
+                labels: studyLabels,
+                foundCount: 0,
+                selectedPinIndex: 0 // Start automatically at the first pin
+            };
+
+            // Setup UI
+            document.getElementById('studyTitle').textContent = `Study: ${escapeHtml(imageToStudy.title)}`;
+            document.getElementById('studyImage').src = imageToStudy.imageSrc;
+            
+            const input = document.getElementById('studyInput');
+            input.value = '';
+            input.disabled = false;
+            input.placeholder = `Answer for pin #1...`;
+            document.querySelector('#studyScreen .instructions p').textContent = 'Type the answer for the highlighted pin. You can also click another pin to switch.';
+
+            document.getElementById('studyResults').classList.add('hidden');
+            document.getElementById('giveUpBtn').classList.remove('hidden');
+            document.getElementById('finishStudyBtn').classList.add('hidden');
+
+            showStudyScreen();
+            updateStudyDisplay();
+            input.focus();
+        }
+
+        function handleStudyPinClick(e) {
+            if (!currentStudySession || !e.target.matches('.label-pin')) return;
+
+            const index = parseInt(e.target.dataset.index, 10);
+            const label = currentStudySession.labels[index];
+
+            if (label.found || label.revealed) {
+                return; // Cannot select an already answered pin
+            }
+
+            currentStudySession.selectedPinIndex = index;
+            updateStudyDisplay();
+
+            const input = document.getElementById('studyInput');
+            input.disabled = false;
+            input.placeholder = `Answer for pin #${index + 1}...`;
+            input.focus();
+        }
+
+        function updateStudyDisplay() {
+            if (!currentStudySession) return;
+
+            const container = document.getElementById('studyImageContainer');
+            const progressEl = document.getElementById('studyProgress');
+            const total = currentStudySession.labels.length;
+
+            // Clear previous pins and labels
+            container.querySelectorAll('.label-pin, .study-revealed-label').forEach(el => el.remove());
+
+            progressEl.textContent = `${currentStudySession.foundCount} / ${total}`;
+
+            currentStudySession.labels.forEach((label, index) => {
+                const pin = document.createElement('div');
+                pin.className = 'label-pin';
+                pin.dataset.index = index;
+                pin.style.left = label.x + '%';
+                pin.style.top = label.y + '%';
+                pin.textContent = (index + 1);
+                pin.style.cssText += `color:white; font-size:0.7em; font-weight:bold; display:flex; align-items:center; justify-content:center;`;
+
+                if (label.found) {
+                    pin.classList.add('found');
+                    container.appendChild(createRevealedLabel(label, 'found'));
+                } else if (label.revealed) {
+                    pin.classList.add('selected'); // Red for given up
+                    container.appendChild(createRevealedLabel(label, 'revealed'));
+                } else if (currentStudySession.selectedPinIndex === index) {
+                    pin.classList.add('answering'); // Orange for current question
+                }
+                
+                container.appendChild(pin);
+            });
+        }
+
+        function createRevealedLabel(label, type) {
+            const el = document.createElement('div');
+            el.className = 'study-revealed-label';
+            el.textContent = label.text;
+            el.style.left = label.x + '%';
+            el.style.top = `calc(${label.y}% - 35px)`;
+            if (type === 'revealed') {
+                el.style.background = 'rgba(229, 62, 62, 0.9)';
+            }
+            return el;
+        }
+
+        function handleStudyInput() {
+            if (!currentStudySession || currentStudySession.selectedPinIndex === -1) {
+                return;
+            }
+
+            const input = document.getElementById('studyInput');
+            const userAnswer = input.value.trim();
+            const selectedIndex = currentStudySession.selectedPinIndex;
+            const correctLabel = currentStudySession.labels[selectedIndex];
+
+            if (!userAnswer) return;
+
+            if (userAnswer.toLowerCase() === correctLabel.text.toLowerCase()) {
+                // Correct Answer
+                correctLabel.found = true;
+                currentStudySession.foundCount++;
+                
+                // Find the next unfound label, looping if necessary
+                const labels = currentStudySession.labels;
+                let nextIndex = labels.findIndex((label, i) => i > selectedIndex && !label.found);
+                if (nextIndex === -1) { // If not found after current, loop to start
+                    nextIndex = labels.findIndex(label => !label.found);
+                }
+                
+                currentStudySession.selectedPinIndex = nextIndex; // Will be -1 if all are found
+                
+                setTimeout(() => {
+                    input.value = '';
+                    if (nextIndex !== -1) {
+                        input.placeholder = `Correct! Now, pin #${nextIndex + 1}...`;
+                    }
+                    updateStudyDisplay();
+                    checkStudyCompletion();
+                }, 300);
+            }
+        }
+
+        function checkStudyCompletion() {
+            if (currentStudySession.foundCount === currentStudySession.labels.length) {
+                const resultsEl = document.getElementById('studyResults');
+                const messageEl = document.getElementById('studyCompleteMessage');
+                
+                messageEl.textContent = '🎉 Congratulations! You found all the labels!';
+                resultsEl.classList.remove('hidden');
+
+                const input = document.getElementById('studyInput');
+                input.disabled = true;
+                input.placeholder = 'Session Complete!';
+                document.getElementById('giveUpBtn').classList.add('hidden');
+                document.getElementById('finishStudyBtn').classList.remove('hidden');
+            }
+        }
+
+        function giveUpStudySession() {
+            if (!confirm('Are you sure you want to give up? All remaining answers will be revealed.')) {
+                return;
+            }
+
+            currentStudySession.labels.forEach(label => {
+                if (!label.found) label.revealed = true;
+            });
+            currentStudySession.selectedPinIndex = -1;
+            updateStudyDisplay();
+
+            const resultsEl = document.getElementById('studyResults');
+            const messageEl = document.getElementById('studyCompleteMessage');
+            messageEl.textContent = 'All answers revealed. Keep studying!';
+            resultsEl.classList.remove('hidden');
+
+            const input = document.getElementById('studyInput');
+            input.disabled = true;
+            input.placeholder = 'Session ended.';
+            document.getElementById('giveUpBtn').classList.add('hidden');
+            document.getElementById('finishStudyBtn').classList.remove('hidden');
+        }
+
+        // ===== INTEGRATION & UTILITIES =====
+        function openFlashcardApp() { window.location.href = 'index.html'; }
+        function openTestApp() { window.location.href = 'flashtest.html'; }
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== INITIALIZE APP =====
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
