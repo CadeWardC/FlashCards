@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚗️</text></svg>">
+    <title>FlashDraw - Chemical Structure Practice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        /* Screen Layout */
+        .screen {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Welcome Screen */
+        .welcome-content {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-content h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .welcome-content .subtitle {
+            font-size: 1.1em;
+            color: #718096;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .welcome-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .welcome-option {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .welcome-option:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .welcome-option .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .welcome-option h3 {
+            font-size: 1.3em;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .welcome-option p {
+            color: #718096;
+            font-size: 0.95em;
+        }
+
+        /* Library Grid */
+        .structures-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .structure-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .structure-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .structure-preview {
+            height: 180px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .structure-preview canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .structure-info {
+            padding: 15px;
+        }
+
+        .structure-name {
+            font-size: 1.1em;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .structure-date {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        .structure-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .structure-actions button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .practice-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .practice-btn:hover {
+            background: #5a67d8;
+        }
+
+        .delete-structure-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .delete-structure-btn:hover {
+            background: #e53e3e;
+            color: white;
+        }
+
+        /* Draw Screen */
+        .draw-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .draw-title {
+            font-size: 1.8em;
+            color: #2d3748;
+        }
+
+        .name-input-container {
+            margin-bottom: 20px;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1.1em;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Canvas Container */
+        .canvas-container {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #drawCanvas, #practiceCanvas, #compareCanvas {
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: #fafafa;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 19px, #e8e8e8 19px, #e8e8e8 20px),
+                repeating-linear-gradient(90deg, transparent, transparent 19px, #e8e8e8 19px, #e8e8e8 20px);
+            background-size: 20px 20px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .atom-node {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #2d3748;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        .atom-node.selected {
+            border-color: #667eea;
+            border-width: 3px;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        .atom-node:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .settings-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .bond-length-display {
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        /* Tool Panel */
+        .tool-panel {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .tool-section {
+            margin-bottom: 20px;
+        }
+
+        .tool-section h3 {
+            color: #2d3748;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+        }
+
+        .tool-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 10px 18px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+            min-width: 60px;
+        }
+
+        .tool-btn:hover {
+            border-color: #cbd5e0;
+            transform: translateY(-1px);
+        }
+
+        .tool-btn.active {
+            border-color: #667eea;
+            background: #edf2f7;
+            font-weight: 600;
+        }
+
+        .atom-btn {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .color-option {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border-color: #2d3748;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+        }
+
+        .size-slider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .size-slider input[type="range"] {
+            flex: 1;
+            height: 6px;
+        }
+
+        .size-value {
+            min-width: 40px;
+            text-align: center;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: #38a169;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .btn-secondary {
+            background: #718096;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* Practice Screen */
+        .practice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .practice-prompt {
+            font-size: 1.3em;
+            color: #2d3748;
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .practice-prompt strong {
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        /* Comparison View */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-panel {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .comparison-panel h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .comparison-panel canvas {
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            background: white;
+            max-width: 100%;
+        }
+
+        .match-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .match-result.perfect {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #38a169;
+        }
+
+        .match-result.good {
+            background: #feebc8;
+            color: #744210;
+            border: 2px solid #dd6b20;
+        }
+
+        .match-result.try-again {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #e53e3e;
+        }
+
+        /* Instructions */
+        .instructions {
+            background: #edf2f7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+
+        .instructions h4 {
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+        }
+
+        /* No structures message */
+        .no-structures {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .no-structures-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .no-structures h3 {
+            color: #4a5568;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .no-structures p {
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚗️ FlashDraw</h1>
+            <p>Master chemical structures through interactive drawing</p>
+        </div>
+
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="screen">
+            <div class="welcome-content">
+                <h2>Welcome to FlashDraw!</h2>
+                <p class="subtitle">Draw chemical structures, save them, and test your knowledge by recreating them from memory.</p>
+                
+                <div class="welcome-options">
+                    <div class="welcome-option" onclick="showDrawScreen()">
+                        <span class="icon">✏️</span>
+                        <h3>Create New Structure</h3>
+                        <p>Draw a chemical structure and save it for practice</p>
+                    </div>
+                    <div class="welcome-option" onclick="showLibraryScreen()">
+                        <span class="icon">📚</span>
+                        <h3>Practice Library</h3>
+                        <p>Quiz yourself on saved structures</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Library Screen -->
+        <div id="libraryScreen" class="screen hidden">
+            <div class="draw-header">
+                <h2 class="draw-title">Your Structure Library</h2>
+            </div>
+
+            <div id="structuresContainer">
+                <!-- Structures will be loaded here -->
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-secondary" onclick="showWelcomeScreen()">← Back to Home</button>
+                <button class="btn" onclick="showDrawScreen()">✏️ Create New Structure</button>
+            </div>
+        </div>
+
+        <!-- Draw Screen -->
+        <div id="drawScreen" class="screen hidden">
+            <div class="draw-header">
+                <h2 class="draw-title">Draw Chemical Structure</h2>
+            </div>
+
+            <div class="instructions">
+                <h4>📝 How to Draw (ChemDraw Style):</h4>
+                <ul>
+                    <li><strong>Add Atoms:</strong> Select atom type (C, O, N, etc.) → Click to place (snaps to grid)</li>
+                    <li><strong>Smart Bonds:</strong> Select bond type → Click first atom → Click second atom OR empty space (auto-creates new atom with angle/length snap)</li>
+                    <li><strong>Quick Structures:</strong> Benzene, cyclopentane, cyclohexane, cycloheptane, or carbon chain templates</li>
+                    <li><strong>Grid Snap:</strong> Atoms snap to 20px grid for perfect alignment (toggle off if needed)</li>
+                    <li><strong>Angle Snap:</strong> Bonds snap to 30° increments for standard bond angles (0°, 30°, 60°, 90°, 120°, 150°)</li>
+                    <li><strong>Fixed Length:</strong> Bonds default to 50px length for consistent structure (toggle off for free drawing)</li>
+                    <li><strong>Delete:</strong> Right-click atoms or bonds to remove them</li>
+                    <li><strong>Change Atoms:</strong> Click existing atom with different element selected to change it</li>
+                </ul>
+            </div>
+
+            <div class="name-input-container">
+                <input type="text" id="structureName" class="name-input" placeholder="Enter chemical name (e.g., Benzene, Ethanol)">
+            </div>
+
+            <div class="tool-panel">
+                <div class="tool-section">
+                    <h3>Atoms</h3>
+                    <div class="tool-buttons">
+                        <button class="tool-btn atom-btn active" data-tool="C" onclick="selectTool('C')" style="color: #000000;">C</button>
+                        <button class="tool-btn atom-btn" data-tool="H" onclick="selectTool('H')" style="color: #505050;">H</button>
+                        <button class="tool-btn atom-btn" data-tool="O" onclick="selectTool('O')" style="color: #FF0000;">O</button>
+                        <button class="tool-btn atom-btn" data-tool="N" onclick="selectTool('N')" style="color: #0000FF;">N</button>
+                        <button class="tool-btn atom-btn" data-tool="S" onclick="selectTool('S')" style="color: #FFA500;">S</button>
+                        <button class="tool-btn atom-btn" data-tool="P" onclick="selectTool('P')" style="color: #FF8C00;">P</button>
+                        <button class="tool-btn atom-btn" data-tool="F" onclick="selectTool('F')" style="color: #00AA00;">F</button>
+                        <button class="tool-btn atom-btn" data-tool="Cl" onclick="selectTool('Cl')" style="color: #00AA00;">Cl</button>
+                        <button class="tool-btn atom-btn" data-tool="Br" onclick="selectTool('Br')" style="color: #A52A2A;">Br</button>
+                        <button class="tool-btn atom-btn" data-tool="I" onclick="selectTool('I')" style="color: #8B008B;">I</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Bond Tools</h3>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" data-tool="single" onclick="selectTool('single')">─ Single</button>
+                        <button class="tool-btn" data-tool="double" onclick="selectTool('double')">═ Double</button>
+                        <button class="tool-btn" data-tool="triple" onclick="selectTool('triple')">≡ Triple</button>
+                        <button class="tool-btn" data-tool="wedge" onclick="selectTool('wedge')">◢ Wedge</button>
+                        <button class="tool-btn" data-tool="dash" onclick="selectTool('dash')">⋯ Dash</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Structure Tools</h3>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" data-tool="benzene" onclick="selectTool('benzene')">⬡ Benzene</button>
+                        <button class="tool-btn" data-tool="cyclo5" onclick="selectTool('cyclo5')">⬠ Pentagon</button>
+                        <button class="tool-btn" data-tool="cyclo6" onclick="selectTool('cyclo6')">⬢ Hexagon</button>
+                        <button class="tool-btn" data-tool="cyclo7" onclick="selectTool('cyclo7')">⬢ Heptagon</button>
+                        <button class="tool-btn" data-tool="chain" onclick="selectTool('chain')">⚡ Chain</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Drawing Settings</h3>
+                    <div class="settings-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="snapToGrid" checked onchange="toggleSnapToGrid()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="color: #4a5568;">Snap to Grid (20px)</span>
+                    </div>
+                    <div class="settings-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="angleSnap" checked onchange="toggleAngleSnap()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="color: #4a5568;">Angle Snap (30°)</span>
+                    </div>
+                    <div class="settings-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="fixedBondLength" checked onchange="toggleFixedBondLength()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="color: #4a5568;">Fixed Bond Length</span>
+                        <span class="bond-length-display" id="bondLengthDisplay">50px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="drawCanvas" width="800" height="600"></canvas>
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-secondary" onclick="showWelcomeScreen()">← Cancel</button>
+                <button class="btn btn-danger" onclick="clearCanvas()">🗑️ Clear Canvas</button>
+                <button class="btn btn-success" onclick="saveStructure()">💾 Save Structure</button>
+            </div>
+        </div>
+
+        <!-- Practice Screen -->
+        <div id="practiceScreen" class="screen hidden">
+            <div class="practice-header">
+                <h2 class="draw-title">Practice Mode</h2>
+            </div>
+
+            <div class="practice-prompt">
+                Draw the structure of: <strong id="practiceStructureName"></strong>
+            </div>
+
+            <div class="instructions">
+                <h4>🎯 Your Goal:</h4>
+                <ul>
+                    <li>Recreate the chemical structure from memory using the same tools</li>
+                    <li>Match the atom types, bond types, and structure arrangement</li>
+                    <li>Right-click to delete, left-click to add atoms/bonds</li>
+                    <li>Click "Check Answer" when done to compare with the original</li>
+                </ul>
+            </div>
+
+            <div class="tool-panel">
+                <div class="tool-section">
+                    <h3>Atoms</h3>
+                    <div class="tool-buttons">
+                        <button class="tool-btn atom-btn active" data-tool="C" onclick="selectPracticeTool('C')" style="color: #000000;">C</button>
+                        <button class="tool-btn atom-btn" data-tool="H" onclick="selectPracticeTool('H')" style="color: #505050;">H</button>
+                        <button class="tool-btn atom-btn" data-tool="O" onclick="selectPracticeTool('O')" style="color: #FF0000;">O</button>
+                        <button class="tool-btn atom-btn" data-tool="N" onclick="selectPracticeTool('N')" style="color: #0000FF;">N</button>
+                        <button class="tool-btn atom-btn" data-tool="S" onclick="selectPracticeTool('S')" style="color: #FFA500;">S</button>
+                        <button class="tool-btn atom-btn" data-tool="P" onclick="selectPracticeTool('P')" style="color: #FF8C00;">P</button>
+                        <button class="tool-btn atom-btn" data-tool="F" onclick="selectPracticeTool('F')" style="color: #00AA00;">F</button>
+                        <button class="tool-btn atom-btn" data-tool="Cl" onclick="selectPracticeTool('Cl')" style="color: #00AA00;">Cl</button>
+                        <button class="tool-btn atom-btn" data-tool="Br" onclick="selectPracticeTool('Br')" style="color: #A52A2A;">Br</button>
+                        <button class="tool-btn atom-btn" data-tool="I" onclick="selectPracticeTool('I')" style="color: #8B008B;">I</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Bond Tools</h3>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" data-tool="single" onclick="selectPracticeTool('single')">─ Single</button>
+                        <button class="tool-btn" data-tool="double" onclick="selectPracticeTool('double')">═ Double</button>
+                        <button class="tool-btn" data-tool="triple" onclick="selectPracticeTool('triple')">≡ Triple</button>
+                        <button class="tool-btn" data-tool="wedge" onclick="selectPracticeTool('wedge')">◢ Wedge</button>
+                        <button class="tool-btn" data-tool="dash" onclick="selectPracticeTool('dash')">⋯ Dash</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Structure Tools</h3>
+                    <div class="tool-buttons">
+                        <button class="tool-btn" data-tool="benzene" onclick="selectPracticeTool('benzene')">⬡ Benzene</button>
+                        <button class="tool-btn" data-tool="cyclo5" onclick="selectPracticeTool('cyclo5')">⬠ Pentagon</button>
+                        <button class="tool-btn" data-tool="cyclo6" onclick="selectPracticeTool('cyclo6')">⬢ Hexagon</button>
+                        <button class="tool-btn" data-tool="cyclo7" onclick="selectPracticeTool('cyclo7')">⬢ Heptagon</button>
+                        <button class="tool-btn" data-tool="chain" onclick="selectPracticeTool('chain')">⚡ Chain</button>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>Drawing Settings</h3>
+                    <div class="settings-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="practiceSnapToGrid" checked onchange="togglePracticeSnapToGrid()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="color: #4a5568;">Snap to Grid (20px)</span>
+                    </div>
+                    <div class="settings-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="practiceAngleSnap" checked onchange="togglePracticeAngleSnap()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="color: #4a5568;">Angle Snap (30°)</span>
+                    </div>
+                    <div class="settings-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="practiceFixedBondLength" checked onchange="togglePracticeFixedBondLength()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="color: #4a5568;">Fixed Bond Length</span>
+                        <span class="bond-length-display" id="practiceBondLengthDisplay">50px</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="practiceCanvas" width="800" height="600"></canvas>
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-secondary" onclick="showLibraryScreen()">← Back to Library</button>
+                <button class="btn btn-danger" onclick="clearPracticeCanvas()">🗑️ Clear Canvas</button>
+                <button class="btn" onclick="showOriginal()">👁️ Peek at Original</button>
+                <button class="btn btn-success" onclick="checkAnswer()">✓ Check Answer</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="screen hidden">
+            <div class="practice-header">
+                <h2 class="draw-title">Results</h2>
+            </div>
+
+            <div id="matchResultDiv" class="match-result">
+                <!-- Result message will appear here -->
+            </div>
+
+            <div class="comparison-container">
+                <div class="comparison-panel">
+                    <h3>Original Structure</h3>
+                    <canvas id="originalCanvas" width="400" height="300"></canvas>
+                </div>
+                <div class="comparison-panel">
+                    <h3>Your Drawing</h3>
+                    <canvas id="compareCanvas" width="400" height="300"></canvas>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-secondary" onclick="showLibraryScreen()">← Back to Library</button>
+                <button class="btn" onclick="tryAgain()">🔄 Try Again</button>
+                <button class="btn btn-success" onclick="practiceAnother()">➡️ Practice Another</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Atom color mapping
+        const atomColors = {
+            'C': '#000000',
+            'H': '#505050',
+            'O': '#FF0000',
+            'N': '#0000FF',
+            'S': '#FFA500',
+            'P': '#FF8C00',
+            'F': '#00AA00',
+            'Cl': '#00AA00',
+            'Br': '#A52A2A',
+            'I': '#8B008B'
+        };
+
+        // Data storage
+        let structures = JSON.parse(localStorage.getItem('chemicalStructures')) || [];
+        let currentStructure = null;
+
+        // Canvas setup for drawing
+        const drawCanvas = document.getElementById('drawCanvas');
+        const drawCtx = drawCanvas.getContext('2d');
+        let currentTool = 'C';
+        let atoms = [];
+        let bonds = [];
+        let selectedAtom = null;
+        let hoverAtom = null;
+        let bondStart = null;
+        
+        // Drawing settings
+        let snapToGrid = true;
+        let angleSnap = true;
+        let fixedBondLength = true;
+        let bondLength = 50;
+        let gridSize = 20;
+        let snapAngle = 30; // degrees
+
+        // Canvas setup for practice
+        const practiceCanvas = document.getElementById('practiceCanvas');
+        const practiceCtx = practiceCanvas.getContext('2d');
+        let practiceTool = 'C';
+        let practiceAtoms = [];
+        let practiceBonds = [];
+        let practiceSelectedAtom = null;
+        let practiceHoverAtom = null;
+        let practiceBondStart = null;
+        
+        // Practice settings
+        let practiceSnapToGrid = true;
+        let practiceAngleSnap = true;
+        let practiceFixedBondLength = true;
+
+        // Screen management
+        function showWelcomeScreen() {
+            hideAllScreens();
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+        }
+
+        function showLibraryScreen() {
+            hideAllScreens();
+            document.getElementById('libraryScreen').classList.remove('hidden');
+            loadLibrary();
+        }
+
+        function showDrawScreen() {
+            hideAllScreens();
+            document.getElementById('drawScreen').classList.remove('hidden');
+            document.getElementById('structureName').value = '';
+            clearCanvas();
+        }
+
+        function showPracticeScreen(structure) {
+            hideAllScreens();
+            currentStructure = structure;
+            document.getElementById('practiceScreen').classList.remove('hidden');
+            document.getElementById('practiceStructureName').textContent = structure.name;
+            clearPracticeCanvas();
+        }
+
+        function showResultsScreen() {
+            hideAllScreens();
+            document.getElementById('resultsScreen').classList.remove('hidden');
+        }
+
+        function hideAllScreens() {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('hidden');
+            });
+        }
+
+        // Drawing functions
+        function selectTool(tool) {
+            currentTool = tool;
+            bondStart = null;
+            document.querySelectorAll('#drawScreen [data-tool]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function isAtomTool(tool) {
+            return ['C', 'H', 'O', 'N', 'S', 'P', 'F', 'Cl', 'Br', 'I'].includes(tool);
+        }
+
+        function isBondTool(tool) {
+            return ['single', 'double', 'triple', 'wedge', 'dash'].includes(tool);
+        }
+
+        function isStructureTool(tool) {
+            return ['benzene', 'cyclo5', 'cyclo6', 'cyclo7', 'chain'].includes(tool);
+        }
+
+        function findAtomAt(x, y, atomList) {
+            return atomList.find(atom => {
+                const dx = atom.x - x;
+                const dy = atom.y - y;
+                return Math.sqrt(dx * dx + dy * dy) < 15;
+            });
+        }
+
+        // Snap position to grid
+        function snapToGridPoint(x, y) {
+            if (!snapToGrid) return {x, y};
+            return {
+                x: Math.round(x / gridSize) * gridSize,
+                y: Math.round(y / gridSize) * gridSize
+            };
+        }
+
+        function snapToGridPointPractice(x, y) {
+            if (!practiceSnapToGrid) return {x, y};
+            return {
+                x: Math.round(x / gridSize) * gridSize,
+                y: Math.round(y / gridSize) * gridSize
+            };
+        }
+
+        // Calculate bond endpoint with angle snapping and fixed length
+        function calculateBondEndpoint(startX, startY, endX, endY, useAngleSnap, useFixedLength) {
+            let dx = endX - startX;
+            let dy = endY - startY;
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Snap to nearest angle
+            if (useAngleSnap) {
+                angle = Math.round(angle / snapAngle) * snapAngle;
+            }
+            
+            // Use fixed bond length
+            if (useFixedLength) {
+                distance = bondLength;
+            }
+            
+            const radians = angle * Math.PI / 180;
+            return {
+                x: startX + distance * Math.cos(radians),
+                y: startY + distance * Math.sin(radians)
+            };
+        }
+
+        // Settings toggles
+        function toggleSnapToGrid() {
+            snapToGrid = document.getElementById('snapToGrid').checked;
+        }
+
+        function toggleAngleSnap() {
+            angleSnap = document.getElementById('angleSnap').checked;
+        }
+
+        function toggleFixedBondLength() {
+            fixedBondLength = document.getElementById('fixedBondLength').checked;
+        }
+
+        function togglePracticeSnapToGrid() {
+            practiceSnapToGrid = document.getElementById('practiceSnapToGrid').checked;
+        }
+
+        function togglePracticeAngleSnap() {
+            practiceAngleSnap = document.getElementById('practiceAngleSnap').checked;
+        }
+
+        function togglePracticeFixedBondLength() {
+            practiceFixedBondLength = document.getElementById('practiceFixedBondLength').checked;
+        }
+
+        // Drawing canvas events
+        drawCanvas.addEventListener('click', (e) => {
+            const rect = drawCanvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            const clickedAtom = findAtomAt(x, y, atoms);
+            
+            if (isAtomTool(currentTool)) {
+                if (clickedAtom) {
+                    // Change atom type
+                    clickedAtom.symbol = currentTool;
+                    clickedAtom.color = atomColors[currentTool];
+                } else {
+                    // Snap to grid if enabled
+                    const snapped = snapToGridPoint(x, y);
+                    
+                    // Check if there's already an atom at this position
+                    const existingAtom = findAtomAt(snapped.x, snapped.y, atoms);
+                    if (!existingAtom) {
+                        // Add new atom
+                        atoms.push({
+                            id: Date.now() + Math.random(),
+                            x: snapped.x,
+                            y: snapped.y,
+                            symbol: currentTool,
+                            color: atomColors[currentTool]
+                        });
+                    }
+                }
+                redrawCanvas();
+            } else if (isBondTool(currentTool)) {
+                if (clickedAtom) {
+                    if (!bondStart) {
+                        bondStart = clickedAtom;
+                        selectedAtom = clickedAtom;
+                        redrawCanvas();
+                    } else if (bondStart !== clickedAtom) {
+                        // Create bond
+                        bonds.push({
+                            id: Date.now() + Math.random(),
+                            atom1: bondStart.id,
+                            atom2: clickedAtom.id,
+                            type: currentTool
+                        });
+                        bondStart = null;
+                        selectedAtom = null;
+                        redrawCanvas();
+                    }
+                } else if (bondStart) {
+                    // Create new atom at bond endpoint with snapping
+                    const endpoint = calculateBondEndpoint(
+                        bondStart.x, bondStart.y, x, y, 
+                        angleSnap, fixedBondLength
+                    );
+                    
+                    // Check if atom already exists at this position
+                    let endAtom = findAtomAt(endpoint.x, endpoint.y, atoms);
+                    
+                    if (!endAtom) {
+                        endAtom = {
+                            id: Date.now() + Math.random(),
+                            x: endpoint.x,
+                            y: endpoint.y,
+                            symbol: 'C',
+                            color: atomColors['C']
+                        };
+                        atoms.push(endAtom);
+                    }
+                    
+                    // Create bond
+                    bonds.push({
+                        id: Date.now() + Math.random(),
+                        atom1: bondStart.id,
+                        atom2: endAtom.id,
+                        type: currentTool
+                    });
+                    
+                    bondStart = null;
+                    selectedAtom = null;
+                    redrawCanvas();
+                }
+            } else if (isStructureTool(currentTool)) {
+                const snapped = snapToGridPoint(x, y);
+                createStructure(currentTool, snapped.x, snapped.y);
+                redrawCanvas();
+            }
+        });
+
+        drawCanvas.addEventListener('mousemove', (e) => {
+            const rect = drawCanvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            hoverAtom = findAtomAt(x, y, atoms);
+            redrawCanvas();
+            
+            // Draw preview for atom placement
+            if (isAtomTool(currentTool) && !hoverAtom) {
+                const snapped = snapToGridPoint(x, y);
+                drawCtx.strokeStyle = '#667eea';
+                drawCtx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                drawCtx.lineWidth = 2;
+                drawCtx.setLineDash([3, 3]);
+                drawCtx.beginPath();
+                drawCtx.arc(snapped.x, snapped.y, 15, 0, 2 * Math.PI);
+                drawCtx.fill();
+                drawCtx.stroke();
+                drawCtx.setLineDash([]);
+                
+                drawCtx.fillStyle = atomColors[currentTool];
+                drawCtx.font = 'bold 14px Arial';
+                drawCtx.textAlign = 'center';
+                drawCtx.textBaseline = 'middle';
+                drawCtx.fillText(currentTool, snapped.x, snapped.y);
+            }
+            
+            // Draw preview line for bond
+            if (bondStart && isBondTool(currentTool)) {
+                let previewX = x;
+                let previewY = y;
+                
+                // If not hovering over an atom, show snapped endpoint
+                if (!hoverAtom) {
+                    const endpoint = calculateBondEndpoint(
+                        bondStart.x, bondStart.y, x, y,
+                        angleSnap, fixedBondLength
+                    );
+                    previewX = endpoint.x;
+                    previewY = endpoint.y;
+                    
+                    // Draw preview atom
+                    drawCtx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                    drawCtx.strokeStyle = '#667eea';
+                    drawCtx.lineWidth = 2;
+                    drawCtx.setLineDash([3, 3]);
+                    drawCtx.beginPath();
+                    drawCtx.arc(previewX, previewY, 15, 0, 2 * Math.PI);
+                    drawCtx.fill();
+                    drawCtx.stroke();
+                    drawCtx.setLineDash([]);
+                } else {
+                    previewX = hoverAtom.x;
+                    previewY = hoverAtom.y;
+                }
+                
+                // Draw preview bond line
+                drawCtx.strokeStyle = '#667eea';
+                drawCtx.lineWidth = 2;
+                drawCtx.setLineDash([5, 5]);
+                drawCtx.beginPath();
+                drawCtx.moveTo(bondStart.x, bondStart.y);
+                drawCtx.lineTo(previewX, previewY);
+                drawCtx.stroke();
+                drawCtx.setLineDash([]);
+            }
+        });
+
+        drawCanvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const rect = drawCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const clickedAtom = findAtomAt(x, y, atoms);
+            if (clickedAtom) {
+                // Delete atom and its bonds
+                atoms = atoms.filter(a => a.id !== clickedAtom.id);
+                bonds = bonds.filter(b => b.atom1 !== clickedAtom.id && b.atom2 !== clickedAtom.id);
+                redrawCanvas();
+            } else {
+                // Check if clicked on a bond
+                const clickedBond = findBondAt(x, y, bonds, atoms);
+                if (clickedBond) {
+                    bonds = bonds.filter(b => b.id !== clickedBond.id);
+                    redrawCanvas();
+                }
+            }
+        });
+
+        function findBondAt(x, y, bondList, atomList) {
+            return bondList.find(bond => {
+                const atom1 = atomList.find(a => a.id === bond.atom1);
+                const atom2 = atomList.find(a => a.id === bond.atom2);
+                if (!atom1 || !atom2) return false;
+                
+                const dist = distanceToLine(x, y, atom1.x, atom1.y, atom2.x, atom2.y);
+                return dist < 8;
+            });
+        }
+
+        function distanceToLine(px, py, x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+            
+            let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+            
+            const nearX = x1 + t * dx;
+            const nearY = y1 + t * dy;
+            return Math.sqrt((px - nearX) ** 2 + (py - nearY) ** 2);
+        }
+
+        function createStructure(type, centerX, centerY) {
+            const newAtoms = [];
+            const newBonds = [];
+            
+            if (type === 'benzene') {
+                const radius = 50;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * 60 - 90) * Math.PI / 180;
+                    const atom = {
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    };
+                    newAtoms.push(atom);
+                }
+                for (let i = 0; i < 6; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 6].id,
+                        type: i % 2 === 0 ? 'double' : 'single'
+                    });
+                }
+            } else if (type === 'cyclo6') {
+                const radius = 50;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * 60 - 90) * Math.PI / 180;
+                    const atom = {
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    };
+                    newAtoms.push(atom);
+                }
+                for (let i = 0; i < 6; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 6].id,
+                        type: 'single'
+                    });
+                }
+            } else if (type === 'cyclo5') {
+                const radius = 45;
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 72 - 90) * Math.PI / 180;
+                    const atom = {
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    };
+                    newAtoms.push(atom);
+                }
+                for (let i = 0; i < 5; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 5].id,
+                        type: 'single'
+                    });
+                }
+            } else if (type === 'cyclo7') {
+                const radius = 55;
+                for (let i = 0; i < 7; i++) {
+                    const angle = (i * 51.43 - 90) * Math.PI / 180;
+                    const atom = {
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    };
+                    newAtoms.push(atom);
+                }
+                for (let i = 0; i < 7; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 7].id,
+                        type: 'single'
+                    });
+                }
+            } else if (type === 'chain') {
+                for (let i = 0; i < 4; i++) {
+                    const atom = {
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + (i - 1.5) * bondLength,
+                        y: centerY,
+                        symbol: 'C',
+                        color: atomColors['C']
+                    };
+                    newAtoms.push(atom);
+                }
+                for (let i = 0; i < 3; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[i + 1].id,
+                        type: 'single'
+                    });
+                }
+            }
+            
+            atoms.push(...newAtoms);
+            bonds.push(...newBonds);
+        }
+
+        function drawBond(ctx, bond, atomList) {
+            const atom1 = atomList.find(a => a.id === bond.atom1);
+            const atom2 = atomList.find(a => a.id === bond.atom2);
+            if (!atom1 || !atom2) return;
+            
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.setLineDash([]);
+            
+            if (bond.type === 'single') {
+                ctx.beginPath();
+                ctx.moveTo(atom1.x, atom1.y);
+                ctx.lineTo(atom2.x, atom2.y);
+                ctx.stroke();
+            } else if (bond.type === 'double') {
+                const dx = atom2.x - atom1.x;
+                const dy = atom2.y - atom1.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const offsetX = -dy / len * 3;
+                const offsetY = dx / len * 3;
+                
+                ctx.beginPath();
+                ctx.moveTo(atom1.x + offsetX, atom1.y + offsetY);
+                ctx.lineTo(atom2.x + offsetX, atom2.y + offsetY);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(atom1.x - offsetX, atom1.y - offsetY);
+                ctx.lineTo(atom2.x - offsetX, atom2.y - offsetY);
+                ctx.stroke();
+            } else if (bond.type === 'triple') {
+                const dx = atom2.x - atom1.x;
+                const dy = atom2.y - atom1.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const offsetX = -dy / len * 4;
+                const offsetY = dx / len * 4;
+                
+                ctx.beginPath();
+                ctx.moveTo(atom1.x, atom1.y);
+                ctx.lineTo(atom2.x, atom2.y);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(atom1.x + offsetX, atom1.y + offsetY);
+                ctx.lineTo(atom2.x + offsetX, atom2.y + offsetY);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(atom1.x - offsetX, atom1.y - offsetY);
+                ctx.lineTo(atom2.x - offsetX, atom2.y - offsetY);
+                ctx.stroke();
+            } else if (bond.type === 'wedge') {
+                const dx = atom2.x - atom1.x;
+                const dy = atom2.y - atom1.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const perpX = -dy / len * 6;
+                const perpY = dx / len * 6;
+                
+                ctx.beginPath();
+                ctx.moveTo(atom1.x, atom1.y);
+                ctx.lineTo(atom2.x + perpX, atom2.y + perpY);
+                ctx.lineTo(atom2.x - perpX, atom2.y - perpY);
+                ctx.closePath();
+                ctx.fillStyle = '#000000';
+                ctx.fill();
+            } else if (bond.type === 'dash') {
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(atom1.x, atom1.y);
+                ctx.lineTo(atom2.x, atom2.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        function drawAtom(ctx, atom, isSelected = false, isHover = false) {
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = isSelected ? '#667eea' : (isHover ? '#4a5568' : '#2d3748');
+            ctx.lineWidth = isSelected ? 3 : 2;
+            
+            ctx.beginPath();
+            ctx.arc(atom.x, atom.y, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.fillStyle = atom.color;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(atom.symbol, atom.x, atom.y);
+        }
+
+        function redrawCanvas() {
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            
+            // Draw bonds first
+            bonds.forEach(bond => drawBond(drawCtx, bond, atoms));
+            
+            // Draw atoms on top
+            atoms.forEach(atom => {
+                const isSelected = selectedAtom && atom.id === selectedAtom.id;
+                const isHover = hoverAtom && atom.id === hoverAtom.id;
+                drawAtom(drawCtx, atom, isSelected, isHover);
+            });
+        }
+
+        function clearCanvas() {
+            atoms = [];
+            bonds = [];
+            selectedAtom = null;
+            bondStart = null;
+            drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+        }
+
+        // Practice canvas functions
+        function selectPracticeTool(tool) {
+            practiceTool = tool;
+            practiceBondStart = null;
+            document.querySelectorAll('#practiceScreen [data-tool]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Practice canvas events
+        practiceCanvas.addEventListener('click', (e) => {
+            const rect = practiceCanvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            const clickedAtom = findAtomAt(x, y, practiceAtoms);
+            
+            if (isAtomTool(practiceTool)) {
+                if (clickedAtom) {
+                    clickedAtom.symbol = practiceTool;
+                    clickedAtom.color = atomColors[practiceTool];
+                } else {
+                    const snapped = snapToGridPointPractice(x, y);
+                    const existingAtom = findAtomAt(snapped.x, snapped.y, practiceAtoms);
+                    if (!existingAtom) {
+                        practiceAtoms.push({
+                            id: Date.now() + Math.random(),
+                            x: snapped.x,
+                            y: snapped.y,
+                            symbol: practiceTool,
+                            color: atomColors[practiceTool]
+                        });
+                    }
+                }
+                redrawPracticeCanvas();
+            } else if (isBondTool(practiceTool)) {
+                if (clickedAtom) {
+                    if (!practiceBondStart) {
+                        practiceBondStart = clickedAtom;
+                        practiceSelectedAtom = clickedAtom;
+                        redrawPracticeCanvas();
+                    } else if (practiceBondStart !== clickedAtom) {
+                        practiceBonds.push({
+                            id: Date.now() + Math.random(),
+                            atom1: practiceBondStart.id,
+                            atom2: clickedAtom.id,
+                            type: practiceTool
+                        });
+                        practiceBondStart = null;
+                        practiceSelectedAtom = null;
+                        redrawPracticeCanvas();
+                    }
+                } else if (practiceBondStart) {
+                    const endpoint = calculateBondEndpoint(
+                        practiceBondStart.x, practiceBondStart.y, x, y,
+                        practiceAngleSnap, practiceFixedBondLength
+                    );
+                    
+                    let endAtom = findAtomAt(endpoint.x, endpoint.y, practiceAtoms);
+                    
+                    if (!endAtom) {
+                        endAtom = {
+                            id: Date.now() + Math.random(),
+                            x: endpoint.x,
+                            y: endpoint.y,
+                            symbol: 'C',
+                            color: atomColors['C']
+                        };
+                        practiceAtoms.push(endAtom);
+                    }
+                    
+                    practiceBonds.push({
+                        id: Date.now() + Math.random(),
+                        atom1: practiceBondStart.id,
+                        atom2: endAtom.id,
+                        type: practiceTool
+                    });
+                    
+                    practiceBondStart = null;
+                    practiceSelectedAtom = null;
+                    redrawPracticeCanvas();
+                }
+            } else if (isStructureTool(practiceTool)) {
+                const snapped = snapToGridPointPractice(x, y);
+                createPracticeStructure(practiceTool, snapped.x, snapped.y);
+                redrawPracticeCanvas();
+            }
+        });
+
+        practiceCanvas.addEventListener('mousemove', (e) => {
+            const rect = practiceCanvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            practiceHoverAtom = findAtomAt(x, y, practiceAtoms);
+            redrawPracticeCanvas();
+            
+            if (isAtomTool(practiceTool) && !practiceHoverAtom) {
+                const snapped = snapToGridPointPractice(x, y);
+                practiceCtx.strokeStyle = '#667eea';
+                practiceCtx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                practiceCtx.lineWidth = 2;
+                practiceCtx.setLineDash([3, 3]);
+                practiceCtx.beginPath();
+                practiceCtx.arc(snapped.x, snapped.y, 15, 0, 2 * Math.PI);
+                practiceCtx.fill();
+                practiceCtx.stroke();
+                practiceCtx.setLineDash([]);
+                
+                practiceCtx.fillStyle = atomColors[practiceTool];
+                practiceCtx.font = 'bold 14px Arial';
+                practiceCtx.textAlign = 'center';
+                practiceCtx.textBaseline = 'middle';
+                practiceCtx.fillText(practiceTool, snapped.x, snapped.y);
+            }
+            
+            if (practiceBondStart && isBondTool(practiceTool)) {
+                let previewX = x;
+                let previewY = y;
+                
+                if (!practiceHoverAtom) {
+                    const endpoint = calculateBondEndpoint(
+                        practiceBondStart.x, practiceBondStart.y, x, y,
+                        practiceAngleSnap, practiceFixedBondLength
+                    );
+                    previewX = endpoint.x;
+                    previewY = endpoint.y;
+                    
+                    practiceCtx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+                    practiceCtx.strokeStyle = '#667eea';
+                    practiceCtx.lineWidth = 2;
+                    practiceCtx.setLineDash([3, 3]);
+                    practiceCtx.beginPath();
+                    practiceCtx.arc(previewX, previewY, 15, 0, 2 * Math.PI);
+                    practiceCtx.fill();
+                    practiceCtx.stroke();
+                    practiceCtx.setLineDash([]);
+                } else {
+                    previewX = practiceHoverAtom.x;
+                    previewY = practiceHoverAtom.y;
+                }
+                
+                practiceCtx.strokeStyle = '#667eea';
+                practiceCtx.lineWidth = 2;
+                practiceCtx.setLineDash([5, 5]);
+                practiceCtx.beginPath();
+                practiceCtx.moveTo(practiceBondStart.x, practiceBondStart.y);
+                practiceCtx.lineTo(previewX, previewY);
+                practiceCtx.stroke();
+                practiceCtx.setLineDash([]);
+            }
+        });
+
+        practiceCanvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const rect = practiceCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const clickedAtom = findAtomAt(x, y, practiceAtoms);
+            if (clickedAtom) {
+                practiceAtoms = practiceAtoms.filter(a => a.id !== clickedAtom.id);
+                practiceBonds = practiceBonds.filter(b => b.atom1 !== clickedAtom.id && b.atom2 !== clickedAtom.id);
+                redrawPracticeCanvas();
+            } else {
+                const clickedBond = findBondAt(x, y, practiceBonds, practiceAtoms);
+                if (clickedBond) {
+                    practiceBonds = practiceBonds.filter(b => b.id !== clickedBond.id);
+                    redrawPracticeCanvas();
+                }
+            }
+        });
+
+        function createPracticeStructure(type, centerX, centerY) {
+            const newAtoms = [];
+            const newBonds = [];
+            
+            if (type === 'benzene') {
+                const radius = 50;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * 60 - 90) * Math.PI / 180;
+                    newAtoms.push({
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    });
+                }
+                for (let i = 0; i < 6; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 6].id,
+                        type: i % 2 === 0 ? 'double' : 'single'
+                    });
+                }
+            } else if (type === 'cyclo6') {
+                const radius = 50;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * 60 - 90) * Math.PI / 180;
+                    newAtoms.push({
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    });
+                }
+                for (let i = 0; i < 6; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 6].id,
+                        type: 'single'
+                    });
+                }
+            } else if (type === 'cyclo5') {
+                const radius = 45;
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 72 - 90) * Math.PI / 180;
+                    newAtoms.push({
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    });
+                }
+                for (let i = 0; i < 5; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 5].id,
+                        type: 'single'
+                    });
+                }
+            } else if (type === 'cyclo7') {
+                const radius = 55;
+                for (let i = 0; i < 7; i++) {
+                    const angle = (i * 51.43 - 90) * Math.PI / 180;
+                    newAtoms.push({
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + radius * Math.cos(angle),
+                        y: centerY + radius * Math.sin(angle),
+                        symbol: 'C',
+                        color: atomColors['C']
+                    });
+                }
+                for (let i = 0; i < 7; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[(i + 1) % 7].id,
+                        type: 'single'
+                    });
+                }
+            } else if (type === 'chain') {
+                for (let i = 0; i < 4; i++) {
+                    newAtoms.push({
+                        id: Date.now() + i + Math.random(),
+                        x: centerX + (i - 1.5) * bondLength,
+                        y: centerY,
+                        symbol: 'C',
+                        color: atomColors['C']
+                    });
+                }
+                for (let i = 0; i < 3; i++) {
+                    newBonds.push({
+                        id: Date.now() + i + 100 + Math.random(),
+                        atom1: newAtoms[i].id,
+                        atom2: newAtoms[i + 1].id,
+                        type: 'single'
+                    });
+                }
+            }
+            
+            practiceAtoms.push(...newAtoms);
+            practiceBonds.push(...newBonds);
+        }
+
+        function redrawPracticeCanvas() {
+            practiceCtx.clearRect(0, 0, practiceCanvas.width, practiceCanvas.height);
+            
+            practiceBonds.forEach(bond => drawBond(practiceCtx, bond, practiceAtoms));
+            
+            practiceAtoms.forEach(atom => {
+                const isSelected = practiceSelectedAtom && atom.id === practiceSelectedAtom.id;
+                const isHover = practiceHoverAtom && atom.id === practiceHoverAtom.id;
+                drawAtom(practiceCtx, atom, isSelected, isHover);
+            });
+        }
+
+        function clearPracticeCanvas() {
+            practiceAtoms = [];
+            practiceBonds = [];
+            practiceSelectedAtom = null;
+            practiceBondStart = null;
+            practiceCtx.clearRect(0, 0, practiceCanvas.width, practiceCanvas.height);
+        }
+
+        // Save structure
+        function saveStructure() {
+            const name = document.getElementById('structureName').value.trim();
+            
+            if (!name) {
+                alert('Please enter a chemical name!');
+                return;
+            }
+            
+            if (atoms.length === 0) {
+                alert('Please draw a structure before saving!');
+                return;
+            }
+            
+            const structure = {
+                id: Date.now(),
+                name: name,
+                atoms: atoms,
+                bonds: bonds,
+                date: new Date().toLocaleDateString()
+            };
+            
+            structures.push(structure);
+            localStorage.setItem('chemicalStructures', JSON.stringify(structures));
+            
+            alert(`Structure "${name}" saved successfully!`);
+            showLibraryScreen();
+        }
+
+        // Library functions
+        function loadLibrary() {
+            const container = document.getElementById('structuresContainer');
+            
+            if (structures.length === 0) {
+                container.innerHTML = `
+                    <div class="no-structures">
+                        <div class="no-structures-icon">⚗️</div>
+                        <h3>No Structures Yet</h3>
+                        <p>Create your first chemical structure to get started!</p>
+                        <button class="btn" onclick="showDrawScreen()">✏️ Create Structure</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '<div class="structures-grid"></div>';
+            const grid = container.querySelector('.structures-grid');
+            
+            structures.forEach(structure => {
+                const card = document.createElement('div');
+                card.className = 'structure-card fade-in';
+                
+                // Create mini canvas for preview
+                const previewCanvas = document.createElement('canvas');
+                previewCanvas.width = 250;
+                previewCanvas.height = 150;
+                const previewCtx = previewCanvas.getContext('2d');
+                
+                // Scale and draw the structure
+                const scaleX = 250 / 800;
+                const scaleY = 150 / 600;
+                previewCtx.scale(scaleX, scaleY);
+                
+                structure.bonds.forEach(bond => drawBond(previewCtx, bond, structure.atoms));
+                structure.atoms.forEach(atom => drawAtom(previewCtx, atom));
+                
+                card.innerHTML = `
+                    <div class="structure-preview">
+                        ${previewCanvas.outerHTML}
+                    </div>
+                    <div class="structure-info">
+                        <div class="structure-name">${structure.name}</div>
+                        <div class="structure-date">Created: ${structure.date}</div>
+                        <div class="structure-actions">
+                            <button class="practice-btn" onclick="startPractice(${structure.id})">🎯 Practice</button>
+                            <button class="delete-structure-btn" onclick="deleteStructure(${structure.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function startPractice(id) {
+            const structure = structures.find(s => s.id === id);
+            if (structure) {
+                showPracticeScreen(structure);
+            }
+        }
+
+        function deleteStructure(id) {
+            if (confirm('Are you sure you want to delete this structure?')) {
+                structures = structures.filter(s => s.id !== id);
+                localStorage.setItem('chemicalStructures', JSON.stringify(structures));
+                loadLibrary();
+            }
+        }
+
+        // Practice functions
+        function showOriginal() {
+            if (confirm('Peeking at the original! This will clear your current attempt. Continue?')) {
+                clearPracticeCanvas();
+                practiceAtoms = JSON.parse(JSON.stringify(currentStructure.atoms));
+                practiceBonds = JSON.parse(JSON.stringify(currentStructure.bonds));
+                redrawPracticeCanvas();
+                
+                setTimeout(() => {
+                    alert('Study complete! The canvas will be cleared for you to try again.');
+                    clearPracticeCanvas();
+                }, 3000);
+            }
+        }
+
+        function checkAnswer() {
+            if (practiceAtoms.length === 0) {
+                alert('Please draw something before checking!');
+                return;
+            }
+            
+            // Compare drawings
+            const similarity = compareDrawings(currentStructure, {atoms: practiceAtoms, bonds: practiceBonds});
+            
+            // Show results
+            showResultsScreen();
+            displayResults(similarity);
+        }
+
+        function compareDrawings(original, practice) {
+            // Compare atom count
+            const atomDiff = Math.abs(original.atoms.length - practice.atoms.length);
+            const maxAtoms = Math.max(original.atoms.length, practice.atoms.length);
+            const atomScore = maxAtoms > 0 ? (1 - atomDiff / maxAtoms) : 0;
+            
+            // Compare bond count
+            const bondDiff = Math.abs(original.bonds.length - practice.bonds.length);
+            const maxBonds = Math.max(original.bonds.length, practice.bonds.length);
+            const bondScore = maxBonds > 0 ? (1 - bondDiff / maxBonds) : 0;
+            
+            // Compare atom types
+            const originalAtoms = {};
+            original.atoms.forEach(a => {
+                originalAtoms[a.symbol] = (originalAtoms[a.symbol] || 0) + 1;
+            });
+            const practiceAtomsMap = {};
+            practice.atoms.forEach(a => {
+                practiceAtomsMap[a.symbol] = (practiceAtomsMap[a.symbol] || 0) + 1;
+            });
+            
+            let atomTypeMatch = 0;
+            let totalTypes = 0;
+            Object.keys({...originalAtoms, ...practiceAtomsMap}).forEach(symbol => {
+                const origCount = originalAtoms[symbol] || 0;
+                const practCount = practiceAtomsMap[symbol] || 0;
+                totalTypes += Math.max(origCount, practCount);
+                atomTypeMatch += Math.min(origCount, practCount);
+            });
+            const typeScore = totalTypes > 0 ? atomTypeMatch / totalTypes : 0;
+            
+            // Compare bond types
+            const originalBondTypes = {};
+            original.bonds.forEach(b => {
+                originalBondTypes[b.type] = (originalBondTypes[b.type] || 0) + 1;
+            });
+            const practiceBondTypes = {};
+            practice.bonds.forEach(b => {
+                practiceBondTypes[b.type] = (practiceBondTypes[b.type] || 0) + 1;
+            });
+            
+            let bondTypeMatch = 0;
+            let totalBondTypes = 0;
+            Object.keys({...originalBondTypes, ...practiceBondTypes}).forEach(type => {
+                const origCount = originalBondTypes[type] || 0;
+                const practCount = practiceBondTypes[type] || 0;
+                totalBondTypes += Math.max(origCount, practCount);
+                bondTypeMatch += Math.min(origCount, practCount);
+            });
+            const bondTypeScore = totalBondTypes > 0 ? bondTypeMatch / totalBondTypes : 0;
+            
+            return (atomScore * 0.25 + bondScore * 0.25 + typeScore * 0.3 + bondTypeScore * 0.2) * 100;
+        }
+
+        function displayResults(similarity) {
+            const resultDiv = document.getElementById('matchResultDiv');
+            
+            if (similarity >= 80) {
+                resultDiv.className = 'match-result perfect';
+                resultDiv.innerHTML = `🎉 Perfect! ${Math.round(similarity)}% Match<br><span style="font-size: 0.8em;">Excellent work recreating the structure!</span>`;
+            } else if (similarity >= 60) {
+                resultDiv.className = 'match-result good';
+                resultDiv.innerHTML = `👍 Good Effort! ${Math.round(similarity)}% Match<br><span style="font-size: 0.8em;">You're getting close! Review and try again.</span>`;
+            } else {
+                resultDiv.className = 'match-result try-again';
+                resultDiv.innerHTML = `💪 Keep Trying! ${Math.round(similarity)}% Match<br><span style="font-size: 0.8em;">Practice makes perfect! Review the original and try again.</span>`;
+            }
+            
+            // Draw comparison canvases
+            const originalCanvas = document.getElementById('originalCanvas');
+            const originalCtx = originalCanvas.getContext('2d');
+            originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+            const scaleX = 400 / 800;
+            const scaleY = 300 / 600;
+            originalCtx.scale(scaleX, scaleY);
+            currentStructure.bonds.forEach(bond => drawBond(originalCtx, bond, currentStructure.atoms));
+            currentStructure.atoms.forEach(atom => drawAtom(originalCtx, atom));
+            
+            const compareCanvas = document.getElementById('compareCanvas');
+            const compareCtx = compareCanvas.getContext('2d');
+            compareCtx.clearRect(0, 0, compareCanvas.width, compareCanvas.height);
+            compareCtx.scale(scaleX, scaleY);
+            practiceBonds.forEach(bond => drawBond(compareCtx, bond, practiceAtoms));
+            practiceAtoms.forEach(atom => drawAtom(compareCtx, atom));
+        }
+
+        function tryAgain() {
+            showPracticeScreen(currentStructure);
+        }
+
+        function practiceAnother() {
+            showLibraryScreen();
+        }
+
+        // Initialize
+        showWelcomeScreen();
+    </script>
+</body>
+</html>
