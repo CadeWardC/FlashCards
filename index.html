@@ -484,6 +484,16 @@
             margin-top: 30px;
         }
 
+        .top-button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px 0;
+            border-top: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
         /* Drop Zone */
         .drop-zone {
             border: 2px dashed #cbd5e0;
@@ -632,6 +642,12 @@
             
             <input type="text" class="set-input" id="setTitle" placeholder="Enter a title for your set (e.g., 'Spanish Vocabulary', 'History Terms')">
             <input type="text" class="set-input" id="setDescription" placeholder="Add a description (optional)">
+            
+            <!-- Top Action Bar -->
+            <div class="top-button-container">
+                <button class="btn btn-success" onclick="saveSet()">💾 Save Set</button>
+                <button class="btn btn-secondary" onclick="showWelcomeScreen()">← Back</button>
+            </div>
             
             <!-- Bulk Import Section -->
             <div class="bulk-import-section" id="bulkImportSection">
